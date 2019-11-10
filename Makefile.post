@@ -1,0 +1,56 @@
+# ****************************************************************************
+# * Sven Lukas
+# *
+# * (C) COPYRIGHT Sven Lukas 2004, 2010
+# ****************************************************************************
+# * Default Pre-Makefile
+# ***************************************************************************/
+
+OBJS        = $(COMMONOBJS) $(ASRCS:.S=.o) $(CSRCS:.c=.o) $(CXXSRCS:.cpp=.o)
+
+LIBDIRS    += $(HOSTLIBDIR)
+CPPFLAGS   += $(patsubst %,-I%,$(INCDIRS))
+CFLAGS     += $(patsubst %,-I%,$(INCDIRS)) $(patsubst %,-L%,$(LIBDIRS))
+CXXFLAGS   += $(patsubst %,-I%,$(INCDIRS)) $(patsubst %,-L%,$(LIBDIRS))
+ASFLAGS    += $(patsubst %,-I%,$(INCDIRS)) $(patsubst %,-L%,$(LIBDIRS))
+LDFLAGS    +=  $(patsubst %,-L%,$(LIBDIRS))
+
+# *********************
+# *** Default rules ***
+# *********************
+
+all_pre:	depend all_subdir $(OBJS)
+
+all_subdir:
+		@for subdir in $(SUBDIRS) ; do $(MAKE) -C $${subdir} || exit 1 ; done
+
+depend:
+ifdef CSRCS
+		$(MAKE) .depend
+else
+ifdef CXXSRCS
+		$(MAKE) .depend
+else
+ifdef ASRCS
+		$(MAKE) .depend
+endif
+endif
+endif
+
+.depend:
+		@$(RM) .depend
+		@for src in $(CSRCS); do $(CPP) -M $(CPPFLAGS) $${src} >> .depend || exit 1; done
+		@for src in $(CXXSRCS); do $(CPP) -M $(CPPFLAGS) $${src} >> .depend || exit 1; done
+		@for src in $(ASRCS); do $(CPP) -M $(CPPFLAGS) $${src} >> .depend || exit 1; done
+
+distclean:
+		@for subdir in $(SUBDIRS); do $(MAKE) -C $${subdir} $@ || exit 1; done
+		$(RM) -f $(CLEANFILES) *.o *.so *.a *.i *.pkg *.dis .depend
+#find -name .*.bak | xargs rm -rf
+
+mrproper:	distclean
+
+clean:
+		@for subdir in $(SUBDIRS); do $(MAKE) -C $${subdir} $@ || exit 1; done
+		$(RM) -f $(CLEANFILES) *.o *.so *.a *.i *.pkg *.dis .depend Makefile.dep
+#find -name .*.bak | xargs rm -rf

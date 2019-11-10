@@ -1,0 +1,5 @@
+intern_all:
+	make -C .. -f Makefile all
+
+intern_clean:
+	make -C .. -f Makefile clean

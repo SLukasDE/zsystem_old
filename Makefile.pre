@@ -1,0 +1,93 @@
+# ****************************************************************************
+# * Sven Lukas
+# *
+# * (C) COPYRIGHT Sven Lukas 2004, 2010
+# ****************************************************************************
+# * Default Pre-Makefile
+# ***************************************************************************/
+
+#CROSS      ?= powerpc64-linux-
+CROSS      = 
+
+HOSTCPP    ?= cpp
+HOSTCC     ?= gcc
+HOSTCXX    ?= g++
+HOSTLIBDIR  = /usr/lib
+
+HOSTCFLAGS = -g -Wall -W -O2 -I. -I../include
+
+CPPFLAGS   = -Wall -W -I.
+CFLAGS     = -Wall -W -I.
+CXXFLAGS   = -Wall -W -I.
+LDFLAGS    = 
+ASFLAGS    = -I. -Wa,-mregnames
+#LDFLAGS    = -nostdlib
+
+CLEANFILES =
+INCDIRS    =
+SUBDIRS    =
+CSRCS      =
+CXXSRCS    =
+ASRCS      =
+COMMONOBJS =
+
+ifdef DEBUG_BUILD
+CC         = $(CROSS)gcc
+AS         = $(CROSS)as
+LD         = $(CROSS)ld
+
+OBJCOPY 	= $(CROSS)objcopy
+OBJDUMP		= $(CROSS)objdump
+STRIP		= $(CROSS)strip
+
+CLEAN      = echo -n
+else
+CC         = @echo -e "\t[CC]\t$(DIRECTORY)$@"; $(CROSS)cc
+CPP        = echo -e "\t[CPP]\t$(DIRECTORY)$@"; $(CROSS)cpp
+CXX        = @echo -e "\t[C++]\t$(DIRECTORY)$@"; $(CROSS)g++
+AS         = @echo -e "\t[AS]\t$(DIRECTORY)$@"; $(CROSS)as
+LD         = @echo -e "\t[LD]\t$(DIRECTORY)$@"; $(CROSS)ld
+DD         = @echo -e "\t[DD]\t$(DIRECTORY)$@"; $(CROSS)dd
+STRIP      = @echo -e "\t[STRIP]\t$(DIRECTORY)$@"; $(CROSS)strip
+RM         = @rm -f
+endif
+
+ifeq ($(BUILD_TYPE), debug)
+CFLAGS     += -g
+CXXFLAGS   += -g
+else
+CFLAGS     += -O2
+CXXFLAGS   += -O2
+endif
+
+ifeq ($(BUILD_TARGET), x86)
+HOSTLIBDIR  = /usr/lib
+LDFLAGS    += -melf_i386
+#LDFLAGS    += -m32
+CFLAGS     += -m32
+CXXFLAGS   += -m32
+ASFLAGS    += -m32
+endif
+
+ifeq ($(BUILD_TARGET), x64)
+HOSTLIBDIR  = /usr/lib64
+LDFLAGS    += -melf_x86_64
+CFLAGS     += -m64
+CXXFLAGS   += -m64
+ASFLAGS    += -m64
+endif
+
+# Include dependency file if available:
+ifneq (,$(wildcard .depend))
+include .depend
+endif
+
+# Def. von Phony-Targets: Bedeutet, dass diese Targes immer 'neu' sind.
+# Wichtig, damit die Targets auch funktionieren wenn Dateien mit dem
+# selben Namen existieren.
+.PHONY: distclean mrproper clean depend all all_pre all_post
+
+all: all_pre all_post
+
+install:
+		@for subdir in $(SUBDIRS); do $(MAKE) -C $${subdir} $@ || exit 1; done
